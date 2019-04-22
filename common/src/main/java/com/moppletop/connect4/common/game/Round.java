@@ -7,16 +7,16 @@ import com.moppletop.connect4.common.player.Player;
 
 import static java.lang.System.in;
 
-public abstract class Round
+public abstract class Round<T extends Player>
 {
 
 	protected final Grid grid;
 	protected final Scanner scanner;
 
-	protected Player player;
+	protected T player;
 	private GameResult result;
 
-	public Round()
+	protected Round()
 	{
 		grid = new Grid(this);
 		scanner = new Scanner(in);
@@ -26,7 +26,7 @@ public abstract class Round
 
 	protected abstract void gameOver();
 
-	public Player getPlayer()
+	public T getPlayer()
 	{
 		return player;
 	}

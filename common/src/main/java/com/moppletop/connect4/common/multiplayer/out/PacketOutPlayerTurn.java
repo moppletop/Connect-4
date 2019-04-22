@@ -1,28 +1,43 @@
 package com.moppletop.connect4.common.multiplayer.out;
 
-import org.fusesource.jansi.Ansi.Color;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 import com.moppletop.connect4.common.multiplayer.Packet;
+import com.moppletop.connect4.common.multiplayer.PacketType;
 
-public class PacketOutPlayerTurn implements Packet
+public class PacketOutPlayerTurn extends Packet
 {
 
-	private final String name;
-	private final Color colour;
+	private byte id;
 
-	public PacketOutPlayerTurn(String name, Color colour)
+	public PacketOutPlayerTurn()
 	{
-		this.name = name;
-		this.colour = colour;
+		super(PacketType.OUT_PLAYER_TURN);
 	}
 
-	public String getName()
+	public PacketOutPlayerTurn(byte id)
 	{
-		return name;
+		this();
+
+		this.id = id;
 	}
 
-	public Color getColour()
+	@Override
+	public void read(DataInputStream stream) throws IOException
 	{
-		return colour;
+		id = stream.readByte();
+	}
+
+	@Override
+	public void write(DataOutputStream stream) throws IOException
+	{
+		stream.writeByte(id);
+	}
+
+	public byte getId()
+	{
+		return id;
 	}
 }

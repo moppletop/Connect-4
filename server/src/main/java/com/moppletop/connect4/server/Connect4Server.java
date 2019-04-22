@@ -9,13 +9,14 @@ import java.util.concurrent.Executors;
 
 import com.moppletop.connect4.common.multiplayer.PacketInterpreter;
 import com.moppletop.connect4.common.multiplayer.PacketListener;
+import com.moppletop.connect4.common.multiplayer.PacketType;
 import com.moppletop.connect4.common.multiplayer.in.PacketInHandshake;
 import com.moppletop.connect4.common.multiplayer.in.PacketInPlaceTile;
 import com.moppletop.connect4.common.multiplayer.out.PacketOutPlayerInfo;
 import com.moppletop.connect4.common.util.Utils;
 import com.moppletop.connect4.server.player.RemotePlayer;
 
-import static java.lang.System.out;
+import static com.moppletop.connect4.common.util.Log.info;
 import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -32,6 +33,7 @@ public class Connect4Server
 	private final PacketInterpreter packetInterpreter;
 
 	private ServerRound round;
+	private byte nextId;
 
 	private Connect4Server() throws IOException
 	{
@@ -39,19 +41,20 @@ public class Connect4Server
 
 		this.players = new ArrayList<>();
 		this.packetInterpreter = new PacketInterpreter();
+		this.nextId = Byte.MIN_VALUE;
 
 		packetInterpreter
-				.addListener(PacketInHandshake.class, onHandshake())
-				.addListener(PacketInPlaceTile.class, onPlaceTile());
+				.addListener(PacketType.IN_HANDSHAKE, onHandshake())
+				.addListener(PacketType.IN_PLACE_TILE, onPlaceTile());
 
 		ServerSocket serverSocket = new ServerSocket(4444);
 		ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
 		while (true)
 		{
-			out.println("Waiting for connections...");
-			threadPool.execute(new RemotePlayer(packetInterpreter, "Player 1", YELLOW, serverSocket.accept()));
-			threadPool.execute(new RemotePlayer(packetInterpreter, "Player 2", RED, serverSocket.accept()));
+			info("Waiting for connections...");
+			threadPool.execute(new RemotePlayer(packetInterpreter, getNextId(), "Player 1", YELLOW, serverSocket.accept()));
+			threadPool.execute(new RemotePlayer(packetInterpreter, getNextId(), "Player 2", RED, serverSocket.accept()));
 
 			while (round == null || !round.isGameOver())
 			{
@@ -75,7 +78,7 @@ public class Connect4Server
 		try
 		{
 			List<String> banner = Utils.readResource("/banner.txt");
-			banner.forEach(line -> out.println(ansi()
+			banner.forEach(line -> info(ansi()
 					.fg(CYAN)
 					.a(line)
 					.reset()));
@@ -86,6 +89,16 @@ public class Connect4Server
 		}
 	}
 
+	private byte getNextId()
+	{
+		if (nextId == Byte.MAX_VALUE)
+		{
+			nextId = Byte.MIN_VALUE;
+		}
+
+		return nextId++;
+	}
+
 	private PacketListener<PacketInHandshake> onHandshake()
 	{
 		return (source, packet) ->
@@ -94,21 +107,25 @@ public class Connect4Server
 			{
 				RemotePlayer newPlayer = (RemotePlayer) source;
 
-				if (!players.isEmpty())
-				{
-					PacketOutPlayerInfo infoPacket = new PacketOutPlayerInfo(newPlayer.getName(), newPlayer.getColour());
-
-					players.forEach(player ->
-					{
-						packetInterpreter.sendPacket(player, infoPacket);
-						packetInterpreter.sendPacket(newPlayer, new PacketOutPlayerInfo(player.getName(), player.getColour()));
-					});
-				}
-
 				players.add(newPlayer);
 
 				if (players.size() == 2)
 				{
+					for (RemotePlayer forPlayer : players)
+					{
+						packetInterpreter.sendPacket(forPlayer, new PacketOutPlayerInfo(forPlayer));
+
+						for (RemotePlayer targetPlayer : players)
+						{
+							if (forPlayer.equals(targetPlayer))
+							{
+								continue;
+							}
+
+							packetInterpreter.sendPacket(forPlayer, new PacketOutPlayerInfo(targetPlayer));
+						}
+					}
+
 					round = new ServerRound(packetInterpreter, players.get(0), players.get(1));
 					new Thread(round)
 							.start();

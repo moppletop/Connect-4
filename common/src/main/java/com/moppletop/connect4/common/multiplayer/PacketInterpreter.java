@@ -1,75 +1,91 @@
 package com.moppletop.connect4.common.multiplayer;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import static com.moppletop.connect4.common.util.Log.debug;
 
 public class PacketInterpreter
 {
 
-	private final JsonParser parser;
-	private final Gson gson;
-	private final Map<Class<? extends Packet>, PacketListener<? extends Packet>> listeners;
+	private final Map<PacketType, PacketListener<? extends Packet>> listeners;
 
 	public PacketInterpreter()
 	{
-		parser = new JsonParser();
-		gson = new Gson();
 		listeners = new HashMap<>();
 	}
 
-	public <T extends Packet> PacketInterpreter addListener(Class<T> clazz, PacketListener<T> listener)
+	public <T extends Packet> PacketInterpreter addListener(PacketType type, PacketListener<T> listener)
 	{
-		if (listeners.containsKey(clazz))
+		if (listeners.containsKey(type))
 		{
-			throw new IllegalStateException("There is already a listener registered for " + clazz.getSimpleName());
+			throw new IllegalStateException("There is already a listener registered for " + type.toString());
 		}
 
-		listeners.put(clazz, listener);
-		System.out.println("Registered a listener: " + clazz.getSimpleName());
+		listeners.put(type, listener);
+		debug("Registered a listener: " + type.toString());
 		return this;
 	}
 
-	public void onMessageReceive(PacketUser source, String message)
+	public void onMessageReceive(PacketUser source, byte packetId, DataInputStream stream)
 	{
-		System.out.println("Received " + message);
+		PacketType type = PacketType.getFromId(packetId);
 
-		JsonElement json = parser.parse(message);
-		String clazz = json.getAsJsonObject().get("className").getAsString();
-		Class<? extends Packet> aClass;
+		if (type == null)
+		{
+			debug("No PacketType mapped for " + packetId);
+			return;
+		}
+
+		debug("Received " + type);
+
+		Packet packet;
 
 		try
 		{
-			aClass = (Class<? extends Packet>) Class.forName(clazz);
+			packet = type.getClazz().getConstructor().newInstance();
 		}
-		catch (ClassNotFoundException ex)
+		catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
 		{
-			ex.printStackTrace();
+			e.printStackTrace();
 			return;
 		}
 
-		PacketListener listener = listeners.get(aClass);
+		try
+		{
+			packet.read(stream);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+
+		PacketListener listener = listeners.get(packet.getPacketType());
 
 		if (listener == null)
 		{
+			debug("No PacketListener mapped for " + type);
 			return;
 		}
-
-		Packet packet = gson.fromJson(json, aClass);
 
 		listener.onPacketReceived(source, packet);
 	}
 
 	public void sendPacket(PacketUser destination, Packet packet)
 	{
-		JsonObject json = gson.toJsonTree(packet).getAsJsonObject();
-		json.addProperty("className", packet.getClass().getName());
+		debug("Sending " + packet.getPacketType());
 
-		System.out.println("Sending " + json.toString());
-		destination.sendPacket(json.toString());
+		try
+		{
+			destination.sendPacket(packet);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

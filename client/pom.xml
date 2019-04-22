@@ -71,7 +71,6 @@
                                 <minVersion>1.8.0</minVersion>
                                 <opts>
                                     <opt>-Djava.endorsed.dirs=./endorsed</opt>
-                                    <opt>-Dansi</opt>
                                 </opts>
                             </jre>
                             <versionInfo>

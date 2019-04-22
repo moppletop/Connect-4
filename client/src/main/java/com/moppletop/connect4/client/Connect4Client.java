@@ -13,7 +13,7 @@ import com.moppletop.connect4.client.menu.OnlineGameMenuAction;
 import com.moppletop.connect4.client.menu.QuitMenuAction;
 import com.moppletop.connect4.common.util.Utils;
 
-import static java.lang.System.*;
+import static com.moppletop.connect4.common.util.Log.*;
 import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -33,7 +33,7 @@ public class Connect4Client
 
 	private Connect4Client() throws IOException
 	{
-		scanner = new Scanner(in);
+		scanner = new Scanner(System.in);
 		banner = Utils.readResource("/banner.txt");
 
 		actions = Arrays.asList
@@ -59,24 +59,24 @@ public class Connect4Client
 				.a("---------------------------------------------------------------------")
 				.reset();
 
-		out.println(header);
+		info(header);
 
-		banner.forEach(line -> out.println(ansi()
+		banner.forEach(line -> info(ansi()
 				.fg(CYAN)
 				.a(line)
 				.reset()));
 
-		out.println();
+		blankLine();
 
 		for (MenuAction action : actions)
 		{
 			if (action == null)
 			{
-				out.println();
+				blankLine();
 				continue;
 			}
 
-			out.println(ansi()
+			info(ansi()
 					.fg(YELLOW)
 					.a("   " + action.getId() + " ")
 					.fg(CYAN)
@@ -84,11 +84,11 @@ public class Connect4Client
 					.reset());
 		}
 
-		out.println();
-		out.println(header);
+		blankLine();
+		info(header);
 
-		out.println();
-		out.println(ansi()
+		blankLine();
+		info(ansi()
 				.fg(CYAN)
 				.a("Enter a menu action: ")
 				.reset());

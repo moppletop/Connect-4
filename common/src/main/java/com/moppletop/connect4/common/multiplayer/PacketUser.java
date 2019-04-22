@@ -5,7 +5,7 @@ import java.io.IOException;
 public interface PacketUser
 {
 
-	void sendPacket(String packetContents);
+	void sendPacket(Packet packet) throws IOException;
 
 	void close() throws IOException;
 

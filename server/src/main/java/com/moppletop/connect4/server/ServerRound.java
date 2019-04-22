@@ -1,13 +1,13 @@
 package com.moppletop.connect4.server;
 
-import com.moppletop.connect4.common.game.Round;
+import com.moppletop.connect4.common.game.IdRound;
 import com.moppletop.connect4.common.multiplayer.Packet;
 import com.moppletop.connect4.common.multiplayer.PacketInterpreter;
 import com.moppletop.connect4.common.multiplayer.out.PacketOutPlaceTile;
 import com.moppletop.connect4.common.multiplayer.out.PacketOutPlayerTurn;
 import com.moppletop.connect4.server.player.RemotePlayer;
 
-public class ServerRound extends Round implements Runnable
+public class ServerRound extends IdRound<RemotePlayer> implements Runnable
 {
 
 	private final PacketInterpreter packetInterpreter;
@@ -20,6 +20,9 @@ public class ServerRound extends Round implements Runnable
 		this.packetInterpreter = packetInterpreter;
 		this.playerA = playerA;
 		this.playerB = playerB;
+
+		playerById.put(playerA.getId(), playerA);
+		playerById.put(playerB.getId(), playerB);
 	}
 
 	@Override
@@ -58,7 +61,7 @@ public class ServerRound extends Round implements Runnable
 		}
 
 		player = player.equals(playerA) ? playerB : playerA;
-		broadcastPacket(new PacketOutPlayerTurn(player.getName(), player.getColour()));
+		broadcastPacket(new PacketOutPlayerTurn(player.getId()));
 	}
 
 	@Override
@@ -71,7 +74,7 @@ public class ServerRound extends Round implements Runnable
 
 		if (grid.placeTile(nextColumn))
 		{
-			packetInterpreter.sendPacket(player.equals(playerA) ? playerA : playerB, new PacketOutPlaceTile(nextColumn));
+			packetInterpreter.sendPacket(player.equals(playerA) ? playerB : playerA, new PacketOutPlaceTile(nextColumn));
 			nextColumn = null;
 			return true;
 		}
@@ -82,7 +85,6 @@ public class ServerRound extends Round implements Runnable
 	@Override
 	protected void gameOver()
 	{
-
 	}
 
 	public void setNextColumn(Integer nextColumn)
@@ -92,7 +94,6 @@ public class ServerRound extends Round implements Runnable
 
 	private void broadcastPacket(Packet packet)
 	{
-		packetInterpreter.sendPacket(playerA, packet);
-		packetInterpreter.sendPacket(playerB, packet);
+		playerById.values().forEach(destination -> packetInterpreter.sendPacket(destination, packet));
 	}
 }

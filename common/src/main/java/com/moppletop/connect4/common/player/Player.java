@@ -27,6 +27,11 @@ public class Player
 	@Override
 	public boolean equals(Object obj)
 	{
+		if (this == obj)
+		{
+			return true;
+		}
+
 		if (obj instanceof Player)
 		{
 			return name.equals(((Player) obj).name);

@@ -6,8 +6,8 @@ import com.moppletop.connect4.client.Connect4Client;
 import com.moppletop.connect4.client.multiplayer.RemoteHandler;
 import com.moppletop.connect4.common.util.Utils;
 
-import static java.lang.System.*;
-import static org.fusesource.jansi.Ansi.Color.CYAN;
+import static com.moppletop.connect4.common.util.Log.*;
+import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class OnlineGameMenuAction extends MenuAction
@@ -23,12 +23,14 @@ public class OnlineGameMenuAction extends MenuAction
 	{
 		Utils.clearConsole();
 
-		out.println(ansi()
+		info(ansi()
 				.fg(CYAN)
 				.a("Enter the address of the server:")
 				.reset());
 
-		String input = client.getScanner().nextLine().trim();
+		String input = client.getScanner().nextLine()
+				.trim()
+				.toLowerCase();
 
 		if (input.isEmpty())
 		{
@@ -39,13 +41,25 @@ public class OnlineGameMenuAction extends MenuAction
 			input = "192.168.0." + input;
 		}
 
+		info(ansi()
+				.fg(CYAN)
+				.a("Connecting to ")
+				.fg(YELLOW)
+				.a(input)
+				.fg(CYAN)
+				.a("...")
+				.reset());
+
 		try
 		{
 			new RemoteHandler(input);
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			info(ansi()
+					.fg(RED)
+					.a("Failed to connect to " + input + ": " + e.getMessage())
+					.reset());
 		}
 	}
 }

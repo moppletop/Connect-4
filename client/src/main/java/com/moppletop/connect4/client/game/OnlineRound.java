@@ -1,15 +1,16 @@
 package com.moppletop.connect4.client.game;
 
 import com.moppletop.connect4.client.multiplayer.RemoteHandler;
-import com.moppletop.connect4.common.game.Round;
+import com.moppletop.connect4.common.game.IdRound;
 import com.moppletop.connect4.common.multiplayer.in.PacketInPlaceTile;
+import com.moppletop.connect4.common.player.IdPlayer;
 import com.moppletop.connect4.common.player.Player;
 
-import static java.lang.System.out;
+import static com.moppletop.connect4.common.util.Log.info;
 import static org.fusesource.jansi.Ansi.Color.CYAN;
 import static org.fusesource.jansi.Ansi.ansi;
 
-public class OnlineRound extends Round
+public class OnlineRound extends IdRound<IdPlayer>
 {
 
 	private final RemoteHandler handler;
@@ -17,10 +18,13 @@ public class OnlineRound extends Round
 
 	private boolean exit;
 
-	public OnlineRound(RemoteHandler handler, Player ourPlayer)
+	public OnlineRound(RemoteHandler handler, IdPlayer ourPlayer, IdPlayer theirPlayer)
 	{
 		this.handler = handler;
 		this.ourPlayer = ourPlayer;
+
+		playerById.put(ourPlayer.getId(), ourPlayer);
+		playerById.put(theirPlayer.getId(), theirPlayer);
 	}
 
 	public void turnMade()
@@ -43,8 +47,7 @@ public class OnlineRound extends Round
 	@Override
 	protected boolean nextTurn()
 	{
-		out.println();
-		out.println(ansi()
+		info(ansi()
 				.fg(CYAN)
 				.a("Your move: ")
 				.reset());
@@ -74,11 +77,11 @@ public class OnlineRound extends Round
 	protected void gameOver()
 	{
 		grid.showGrid();
-		out.println(ansi()
+		info(ansi()
 				.fg(CYAN)
 				.a("Enter any key to return to the menu.")
 				.reset());
-		scanner.next();
+		scanner.nextLine();
 		exit = true;
 	}
 
@@ -92,9 +95,9 @@ public class OnlineRound extends Round
 		}
 	}
 
-	public void setPlayer(Player player)
+	public void setPlayer(byte playerId)
 	{
-		super.player = player;
+		super.player = playerById.get(playerId);
 		turnMade();
 	}
 

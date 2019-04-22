@@ -14,7 +14,7 @@ import com.moppletop.connect4.common.game.GameResult;
 import com.moppletop.connect4.common.game.Round;
 import com.moppletop.connect4.common.util.Utils;
 
-import static java.lang.System.out;
+import static com.moppletop.connect4.common.util.Log.*;
 import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -71,7 +71,7 @@ public class Grid
 					.reset();
 		}
 
-		out.println(ansi);
+		info(ansi);
 
 		boolean winningTiles = round.getResult() != null && round.getResult().getWinningTiles() != null;
 
@@ -107,10 +107,10 @@ public class Grid
 					.fg(BLUE)
 					.a("|");
 
-			out.println(ansi.reset());
+			info(ansi.reset());
 		}
 
-		out.println(ansi()
+		info(ansi()
 				.fg(BLUE)
 				.a(bottomLine)
 				.reset());

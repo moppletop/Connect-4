@@ -3,11 +3,11 @@ package com.moppletop.connect4.client.game;
 import com.moppletop.connect4.common.game.Round;
 import com.moppletop.connect4.common.player.Player;
 
-import static java.lang.System.out;
+import static com.moppletop.connect4.common.util.Log.*;
 import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
-public class LocalRound extends Round
+public class LocalRound extends Round<Player>
 {
 
 	private Player playerA, playerB;
@@ -46,8 +46,8 @@ public class LocalRound extends Round
 	@Override
 	protected boolean nextTurn()
 	{
-		out.println();
-		out.println(ansi()
+		blankLine();
+		info(ansi()
 				.fg(CYAN)
 				.a("Your move: ")
 				.reset());
@@ -71,10 +71,10 @@ public class LocalRound extends Round
 	protected void gameOver()
 	{
 		grid.showGrid();
-		out.println(ansi()
+		info(ansi()
 				.fg(CYAN)
 				.a("Enter any key to return to the menu.")
 				.reset());
-		scanner.next();
+		scanner.nextLine();
 	}
 }

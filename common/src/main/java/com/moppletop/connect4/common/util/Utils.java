@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -15,12 +16,18 @@ import org.fusesource.jansi.AnsiConsole;
 public final class Utils
 {
 
-	private static boolean ansi;
+	private static final boolean ansi;
+	private static final boolean clearConsole;
+	private static final char END_OF_STRING_CHAR = '|';
+
+	static
+	{
+		ansi = System.getProperty("disableAnsi") == null;
+		clearConsole = System.getProperty("disableClearConsole") == null;
+	}
 
 	public static void enableAnsiIfNeeded()
 	{
-		ansi = System.getProperty("ansi") != null;
-
 		if (ansi)
 		{
 			AnsiConsole.systemInstall();
@@ -29,7 +36,7 @@ public final class Utils
 
 	public static void clearConsole()
 	{
-		if (!ansi)
+		if (!clearConsole)
 		{
 			return;
 		}
@@ -84,6 +91,32 @@ public final class Utils
 
 	public static List<String> readResource(String filePath) throws IOException
 	{
-		return Files.readAllLines(Utils.asFile(Utils.class.getResourceAsStream(filePath)).toPath());
+		return Files.readAllLines(asFile(Utils.class.getResourceAsStream(filePath)).toPath());
+	}
+
+	public static String readString(InputStream stream) throws IOException
+	{
+		StringBuilder builder = new StringBuilder();
+
+		int charCode;
+		while ((charCode = stream.read()) != -1)
+		{
+			char ch = (char) charCode;
+
+			if (ch == END_OF_STRING_CHAR)
+			{
+				break;
+			}
+
+			builder.append(ch);
+		}
+
+		return builder.toString();
+	}
+
+	public static void writeString(OutputStream stream, String message) throws IOException
+	{
+		stream.write(message.getBytes());
+		stream.write(END_OF_STRING_CHAR);
 	}
 }
